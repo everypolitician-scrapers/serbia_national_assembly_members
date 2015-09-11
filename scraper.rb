@@ -41,7 +41,7 @@ def scrape_person(url)
   noko = noko_for(url)
   details = noko.css('div.optimize')
 
-  id = url.to_s.gsub(/^.*\.(\d{3})\.\d{3}.*$/, '\1')
+  id = url.to_s.gsub(/^.*\.(\d+)\.\d+.*$/, '\1')
 
   name = details.css('h2').text.to_s.tidy
   sort_name = name
