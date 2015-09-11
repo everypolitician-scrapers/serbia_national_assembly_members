@@ -18,6 +18,18 @@ def noko_for(url)
   Nokogiri::HTML(open(url).read)
 end
 
+def get_social_details(social)
+  details = {}
+  social.each do |item|
+    details[:facebook] = item.css('a/@href').to_s if item.text.to_s.index('Facebook account')
+    details[:twitter] = item.css('a/@href').to_s if item.text.to_s.index('Twitter account')
+    details[:website] = item.css('a/@href').to_s if item.text.to_s.index('Personal website')
+    puts item.to_s.split('<a').first
+  end
+
+  return details
+end
+
 def scrape_list(url)
   noko = noko_for(url)
   noko.css('div.delegate_list tr td a/@href').each do |link|
@@ -48,6 +60,9 @@ def scrape_person(url)
   faction = faction.gsub('Parliamentary Group', '').tidy
   faction = '' if faction == 'MPs not members of parliamentary groups'
 
+  social = noko.xpath('//div[contains(@class,"single_member")]/following-sibling::div/ul/li')
+  social_details = get_social_details(social)
+
   data = {
     id: id,
     name: name,
@@ -56,6 +71,8 @@ def scrape_person(url)
     start_date: start_date,
     birth_date: dob
   }
+
+  data = data.merge(social_details)
 
   ScraperWiki.save_sqlite([:id], data)
 end
