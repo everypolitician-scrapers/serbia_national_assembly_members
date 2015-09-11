@@ -82,7 +82,8 @@ def scrape_person(url)
     faction: faction,
     party: party,
     start_date: start_date,
-    birth_date: dob
+    birth_date: dob,
+    source: url.to_s
   }
 
   data = data.merge(social_details)
