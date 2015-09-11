@@ -34,6 +34,7 @@ def scrape_person(url)
 
   name = details.css('h2').text.to_s.tidy
   dob = details.xpath('//h4[contains(.,"Year of Birth")]/following-sibling::p[not(position() > 1)]/text()').to_s.tidy
+  dob = dob.gsub('.', '')
 
   start_date = details.xpath('//h4[contains(.,"Date of Verification of")]/following-sibling::p[not(position() > 1)]/text()').to_s.tidy
   start_date = Date.parse(start_date).to_s
