@@ -24,7 +24,6 @@ def get_social_details(social)
     details[:facebook] = item.css('a/@href').to_s if item.text.to_s.index('Facebook account')
     details[:twitter] = item.css('a/@href').to_s if item.text.to_s.index('Twitter account')
     details[:website] = item.css('a/@href').to_s if item.text.to_s.index('Personal website')
-    puts item.to_s.split('<a').first
   end
 
   return details
@@ -45,6 +44,18 @@ def scrape_person(url)
   id = url.to_s.gsub(/^.*\.(\d{3})\.\d{3}.*$/, '\1')
 
   name = details.css('h2').text.to_s.tidy
+  sort_name = name
+
+  # we can't re-order the name parts because they don't seem to be
+  # consistent on all the pages so lets not try. We can extract
+  # Dr etc thoough so do that
+  honorific_prefix = ''
+  name.gsub(/((?:(?:Hon|Prof|Dr|Ir|Mrs)\.?\s+)+)/i) do
+    honorific_prefix = $1 or ''
+    honorific_prefix = honorific_prefix.tidy
+    name = name.gsub(honorific_prefix, '') if honorific_prefix.size
+  end
+
   dob = details.xpath('//h4[contains(.,"Year of Birth")]/following-sibling::p[not(position() > 1)]/text()').to_s.tidy
   dob = dob.gsub('.', '')
 
@@ -66,6 +77,8 @@ def scrape_person(url)
   data = {
     id: id,
     name: name,
+    sort_name: sort_name,
+    honorific_prefix: honorific_prefix,
     faction: faction,
     party: party,
     start_date: start_date,
