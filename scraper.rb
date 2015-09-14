@@ -50,10 +50,10 @@ def scrape_person(url)
   # consistent on all the pages so lets not try. We can extract
   # Dr etc thoough so do that
   honorific_prefix = ''
-  name.gsub(/(\s+(?:(?:Prof|Dr|Mrs)\s+)+)/i) do
+  name.gsub(/(\s+(?:(?:Prof|Dr|Mrs)\.?\s+)+)/i) do
     honorific_prefix = $1 or ''
     if honorific_prefix.size then
-      name = name.gsub(honorific_prefix, '')
+      name = name.gsub(honorific_prefix, ' ')
       honorific_prefix = honorific_prefix.gsub('.', '').tidy
       honorific_prefix = honorific_prefix.split(' ').map { |p| p.capitalize } .join(' ')
     end
