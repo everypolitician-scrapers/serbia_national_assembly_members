@@ -94,4 +94,42 @@ def scrape_person(url)
   ScraperWiki.save_sqlite([:id], data)
 end
 
+def create_terms(url)
+  noko = noko_for(url)
+  side_menu = noko.css('div.side_menu')
+  link = side_menu.xpath('.//li/a[contains(.,"Legislature Archive")]')
+
+  noko = noko_for(URI.join(url, link.first[:href]))
+  side_menu = noko.css('div.side_menu')
+  archives = side_menu.xpath('.//li/a[contains(.,"Legislature Archive")]/following-sibling::ul/li')
+
+  date_to_term_map = {}
+  count = 1
+  archives.reverse.each do |term|
+    name = term.text.tidy
+    start = name.gsub(' legislature', '')
+    start_date = Date.parse(start).to_s
+    term = {
+      name: name,
+      start_date: start_date,
+      id: count
+    }
+    date_to_term_map[start_date] = count
+    ScraperWiki.save_sqlite([:id], term, 'terms')
+    count += 1
+  end
+  if not date_to_term_map['2016-06-03'].nil?
+    raise "the latest term has been archived, possibly there's been an election"
+  end
+  term = {
+    name: '3 June 2016 legislature',
+    start_date: '2016-06-03',
+    id: count
+  }
+  date_to_term_map['2016-06-03'] = count
+  ScraperWiki.save_sqlite([:id], term, 'terms')
+  return date_to_term_map
+end
+
+term_map = create_terms('http://www.parlament.gov.rs/national-assembly/composition/members-of-parliament/current-legislature.487.html')
 scrape_list('http://www.parlament.gov.rs/national-assembly/composition/members-of-parliament/current-legislature.487.html')
