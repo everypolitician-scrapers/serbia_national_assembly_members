@@ -29,15 +29,15 @@ def get_social_details(social)
   return details
 end
 
-def scrape_list(url)
+def scrape_list(url, term_map)
   noko = noko_for(url)
   noko.css('div.delegate_list tr td a/@href').each do |link|
     bio = URI.join(url, link.to_s)
-    scrape_person(bio)
+    scrape_person(bio, term_map)
   end
 end
 
-def scrape_person(url)
+def scrape_person(url, term_map)
   noko = noko_for(url)
   details = noko.css('div.optimize')
 
@@ -89,9 +89,25 @@ def scrape_person(url)
     source: url.to_s
   }
 
+  if not term_map[start_date].nil?
+    data[:term] = term_map[start_date]
+  else
+    term_start = ''
+    term_map.keys.sort.each do |start|
+      if start < start_date
+        term_start = start
+      end
+    end
+    data[:term] = term_map[term_start]
+  end
+
   data = data.merge(social_details)
 
-  ScraperWiki.save_sqlite([:id], data)
+  if data[:term].nil?
+    ScraperWiki.save_sqlite([:id], data)
+  else
+    ScraperWiki.save_sqlite([:id, :term], data)
+  end
 end
 
 def create_terms(url)
@@ -132,4 +148,4 @@ def create_terms(url)
 end
 
 term_map = create_terms('http://www.parlament.gov.rs/national-assembly/composition/members-of-parliament/current-legislature.487.html')
-scrape_list('http://www.parlament.gov.rs/national-assembly/composition/members-of-parliament/current-legislature.487.html')
+scrape_list('http://www.parlament.gov.rs/national-assembly/composition/members-of-parliament/current-legislature.487.html', term_map)
