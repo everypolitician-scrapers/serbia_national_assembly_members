@@ -29,6 +29,36 @@ def get_social_details(social)
   return details
 end
 
+def fix_name(name)
+  # we can't re-order the name parts because they don't seem to be
+  # consistent on all the pages so lets not try. We can extract
+  # Dr etc thoough so do that
+  honorific_prefix = ''
+  name.gsub(/(\s+(?:(?:Prof|Dr|Mrs|Dr\.med\.dent)\.?\s+)+)/i) do
+    honorific_prefix = $1 or ''
+    if honorific_prefix.size then
+      name = name.gsub(honorific_prefix, ' ')
+      honorific_prefix = honorific_prefix.gsub('. ', ' ').tidy
+      honorific_prefix = honorific_prefix.gsub('.$', '').tidy
+      honorific_prefix = honorific_prefix.split(' ').map { |p| p.capitalize } .join(' ')
+    end
+  end
+
+  honorific_suffix = ''
+  name.gsub(/(\s+(?:(?:PhD|MD|Prim|M\.?Sci)\.?\s+)+)/i) do
+    honorific_suffix = $1 or ''
+    if honorific_suffix.size then
+      name = name.gsub(honorific_suffix, ' ')
+      honorific_suffix = honorific_suffix.gsub('. ', ' ').tidy
+      honorific_suffix = honorific_suffix.gsub('.$', '').tidy
+    end
+  end
+
+  name = name.gsub(' - ', ' ').tidy
+
+  return name, honorific_prefix, honorific_suffix
+end
+
 def scrape_list(url, term_map)
   noko = noko_for(url)
   noko.css('div.delegate_list tr td a/@href').each do |link|
@@ -46,18 +76,7 @@ def scrape_person(url, term_map)
   name = details.css('h2').text.to_s.tidy
   sort_name = name
 
-  # we can't re-order the name parts because they don't seem to be
-  # consistent on all the pages so lets not try. We can extract
-  # Dr etc thoough so do that
-  honorific_prefix = ''
-  name.gsub(/(\s+(?:(?:Prof|Dr|Mrs)\.?\s+)+)/i) do
-    honorific_prefix = $1 or ''
-    if honorific_prefix.size then
-      name = name.gsub(honorific_prefix, ' ')
-      honorific_prefix = honorific_prefix.gsub('.', '').tidy
-      honorific_prefix = honorific_prefix.split(' ').map { |p| p.capitalize } .join(' ')
-    end
-  end
+  name, honorific_prefix, honorific_suffix = fix_name(name)
 
   dob = details.xpath('//h4[contains(.,"Year of Birth")]/following-sibling::p[not(position() > 1)]/text()').to_s.tidy
   dob = dob.gsub('.', '')
@@ -82,6 +101,7 @@ def scrape_person(url, term_map)
     name: name,
     sort_name: sort_name,
     honorific_prefix: honorific_prefix,
+    honorific_suffix: honorific_suffix,
     faction: faction,
     party: party,
     start_date: start_date,
