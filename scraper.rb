@@ -148,7 +148,8 @@ def create_terms(url)
     term = {
       name: name,
       start_date: start_date,
-      id: count
+      id: count,
+      source: URI.join(url, term.css('a/@href').to_s).to_s
     }
     date_to_term_map[start_date] = count
     ScraperWiki.save_sqlite([:id], term, 'terms')
@@ -160,7 +161,8 @@ def create_terms(url)
   term = {
     name: '3 June 2016 legislature',
     start_date: '2016-06-03',
-    id: count
+    id: count,
+    source: url
   }
   date_to_term_map['2016-06-03'] = count
   ScraperWiki.save_sqlite([:id], term, 'terms')
