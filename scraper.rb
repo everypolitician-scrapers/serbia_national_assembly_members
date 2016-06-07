@@ -65,6 +65,56 @@ def scrape_list(url, term_map)
     bio = URI.join(url, link.to_s)
     scrape_person(bio, term_map)
   end
+  terms = ScraperWiki::select('* FROM terms WHERE source <> ?', [url])
+  for term in terms
+    scrape_historic(term['source'], term['id'], term_map)
+  end 
+end
+
+def scrape_historic(url, term, term_map)
+  max_term = term_map.values.max
+  noko = noko_for(url)
+  noko.css('div.delegate_list tr').each do |row|
+    cells = row.css('td')
+    if cells.count > 0
+      name = cells[0].text.tidy
+      party = cells[1].text.tidy
+      dob = cells[3].text.tidy
+
+      sort_name = name
+      name, honorific_prefix, honorific_suffix = fix_name(name)
+
+      data = {
+        name: name,
+        honorific_prefix: honorific_prefix,
+        honorific_suffix: honorific_suffix,
+        sort_name: sort_name,
+        faction: party,
+        birth_date: dob,
+        source: url,
+        term: term
+      }
+
+      dates = cells[2].text.tidy
+      start_date, end_date = dates.match(/(\d{2}\.\d{2}\.\d{4})\s*-\s*(\d{2}\.\d{2}\.\d{4})/).captures rescue nil
+
+      if start_date and end_date
+        start_date = Date.parse(start_date.gsub('.', '-')).to_s
+        end_date = Date.parse(end_date.gsub('.', '-')).to_s
+        data[:start_date] = start_date
+        data[:end_date] = end_date
+      end
+
+      # try to get a matching ID from the latest term which is the only one that we can really rely on
+      id_match = ScraperWiki::select('distinct id FROM data WHERE name = ? and birth_date = ? and term = ?', [name, dob, max_term])
+      if not id_match.nil? and id_match.count == 1 and not id_match[0]['id'].nil?
+        data[:id] = id_match[0]['id']
+        ScraperWiki.save_sqlite([:id, :term], data)
+      else
+        ScraperWiki.save_sqlite([:name, :birth_date, :term], data)
+      end
+    end
+  end
 end
 
 def scrape_person(url, term_map)
