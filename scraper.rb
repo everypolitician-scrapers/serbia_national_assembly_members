@@ -88,7 +88,7 @@ def scrape_person(url, term_map)
   party = party.gsub(/\(.*$/, '').tidy
   party = '' if party == '-'
 
-  faction = details.xpath('//h4[contains(.,"Parliamentary group")]/following-sibling::p/a[not(position() > 1)]/text()').to_s
+  faction = details.xpath('//h4[contains(.,"Parliamentary group")]/following-sibling::p[position() = 1]/a[not(position() > 1)]/text()').to_s
   faction = faction.gsub('Read more ˃˃', '')
   faction = faction.gsub('Parliamentary Group', '').tidy
   faction = '' if faction == 'MPs not members of parliamentary groups'
