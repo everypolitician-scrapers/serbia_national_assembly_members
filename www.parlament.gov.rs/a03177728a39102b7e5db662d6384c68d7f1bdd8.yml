@@ -1,0 +1,43 @@
+---
+request:
+  method: get
+  uri: http://www.parlament.gov.rs/DUSICA_STOJKOVIC.773.488.html
+  body:
+    encoding: US-ASCII
+    string: ''
+  headers:
+    Accept-Encoding:
+    - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+    Accept:
+    - '*/*'
+    User-Agent:
+    - Ruby
+response:
+  status:
+    code: 200
+    message: OK
+  headers:
+    Date:
+    - Tue, 02 Aug 2016 16:16:24 GMT
+    Server:
+    - Apache/2.2.14 (Ubuntu)
+    X-Powered-By:
+    - PHP/5.3.2-1ubuntu4.9
+    Set-Cookie:
+    - PHPSESSID=iumd3fv9khj45a9cvctgm51sr6; path=/
+    Expires:
+    - Thu, 19 Nov 1981 08:52:00 GMT
+    Cache-Control:
+    - no-store, no-cache, must-revalidate, post-check=0, pre-check=0
+    Pragma:
+    - no-cache
+    Vary:
+    - Accept-Encoding
+    Content-Length:
+    - '11772'
+    Content-Type:
+    - text/html; charset=utf-8
+  body:
+    encoding: ASCII-8BIT
+  http_version: 
+recorded_at: Tue, 02 Aug 2016 16:16:26 GMT
