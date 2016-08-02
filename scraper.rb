@@ -6,8 +6,6 @@ require 'nokogiri'
 require 'scraped_page_archive/open-uri'
 require 'date'
 
-OpenURI::Cache.cache_path = '.cache'
-
 class String
   def tidy
     self.gsub(/[[:space:]]+/, ' ').strip
