@@ -1,0 +1,59 @@
+# A base Rubocop configuration that other repos can inherit from
+# http://rubocop.readthedocs.io/en/latest/configuration/#inheriting-configuration-from-a-remote-url
+
+Lint/AssignmentInCondition:
+  Enabled: false
+
+Lint/Debugger:
+  Enabled: false
+
+Metrics/LineLength:
+  Max: 120
+
+Performance/Casecmp:
+  Enabled: false
+
+
+Style/AlignHash:
+  EnforcedHashRocketStyle: table
+  EnforcedColonStyle: table
+
+Style/AndOr:
+  Enabled: false
+
+Style/ClassAndModuleCamelCase:
+  Enabled: false
+
+Style/CollectionMethods:
+  Enabled: true
+
+Style/Documentation:
+  Enabled: false
+
+Style/FormatString:
+  EnforcedStyle: percent
+
+Style/HashSyntax:
+  EnforcedStyle: ruby19_no_mixed_keys
+
+Style/RescueModifier:
+  Enabled: false
+
+Style/SignalException:
+  Enabled: false
+
+Style/SymbolArray:
+  Enabled: true
+
+Style/TrailingCommaInLiteral:
+  EnforcedStyleForMultiline: consistent_comma
+
+# Minitest::Spec uses long blocks to contains the specs, so disable this check
+# for the tests.
+Metrics/BlockLength:
+  Max: 10
+  Exclude:
+    - 'spec/**/*'
+    - 't/**/*'
+    - 'test/**/*'
+    - '*.gemspec'
