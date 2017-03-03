@@ -2,16 +2,13 @@
 # #!/bin/env ruby
 # encoding: utf-8
 
-require 'scraperwiki'
-require 'nokogiri'
-require 'scraped_page_archive/open-uri'
 require 'date'
+require 'scraped'
+require 'scraperwiki'
 
-class String
-  def tidy
-    gsub(/[[:space:]]+/, ' ').strip
-  end
-end
+# require 'open-uri/cached'
+# OpenURI::Cache.cache_path = '.cache'
+require 'scraped_page_archive/open-uri'
 
 def noko_for(url)
   Nokogiri::HTML(open(url).read)
@@ -119,6 +116,7 @@ def scrape_person(url, term_map)
   end
 
   data = data.merge(social_details)
+  # puts data.reject { |k,v| v.to_s.empty? }.sort_by { |k,v| k }.to_h
 
   if data[:term].nil?
     ScraperWiki.save_sqlite([:id], data)
