@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # #!/bin/env ruby
 # encoding: utf-8
 
@@ -8,7 +9,7 @@ require 'date'
 
 class String
   def tidy
-    self.gsub(/[[:space:]]+/, ' ').strip
+    gsub(/[[:space:]]+/, ' ').strip
   end
 end
 
@@ -24,7 +25,7 @@ def get_social_details(social)
     details[:website] = item.css('a/@href').to_s if item.text.to_s.index('Personal website')
   end
 
-  return details
+  details
 end
 
 def fix_name(name)
@@ -33,19 +34,19 @@ def fix_name(name)
   # Dr etc thoough so do that
   honorific_prefix = ''
   name.gsub(/(\s+(?:(?:Prof|Dr|Mrs|Dr\.med\.dent)\.?\s+)+)/i) do
-    honorific_prefix = $1 or ''
-    if honorific_prefix.size then
+    honorific_prefix = Regexp.last_match(1) or ''
+    if honorific_prefix.size
       name = name.gsub(honorific_prefix, ' ')
       honorific_prefix = honorific_prefix.gsub('. ', ' ').tidy
       honorific_prefix = honorific_prefix.gsub('.$', '').tidy
-      honorific_prefix = honorific_prefix.split(' ').map { |p| p.capitalize } .join(' ')
+      honorific_prefix = honorific_prefix.split(' ').map(&:capitalize) .join(' ')
     end
   end
 
   honorific_suffix = ''
   name.gsub(/(\s+(?:(?:PhD|MD|Prim|M\.?Sci)\.?\s+)+)/i) do
-    honorific_suffix = $1 or ''
-    if honorific_suffix.size then
+    honorific_suffix = Regexp.last_match(1) or ''
+    if honorific_suffix.size
       name = name.gsub(honorific_suffix, ' ')
       honorific_suffix = honorific_suffix.gsub('. ', ' ').tidy
       honorific_suffix = honorific_suffix.gsub('.$', '').tidy
@@ -54,7 +55,7 @@ def fix_name(name)
 
   name = name.gsub(' - ', ' ').tidy
 
-  return name, honorific_prefix, honorific_suffix
+  [name, honorific_prefix, honorific_suffix]
 end
 
 def scrape_list(url, term_map)
@@ -77,7 +78,7 @@ def scrape_person(url, term_map)
   name, honorific_prefix, honorific_suffix = fix_name(name)
 
   dob = details.xpath('//h4[contains(.,"Year of Birth")]/following-sibling::p[not(position() > 1)]/text()').to_s.tidy
-  dob = dob.gsub('.', '')
+  dob = dob.delete('.')
 
   start_date = details.xpath('//h4[contains(.,"Date of Verification of")]/following-sibling::p[not(position() > 1)]/text()').to_s.tidy
   start_date = Date.parse(start_date).to_s
@@ -95,26 +96,24 @@ def scrape_person(url, term_map)
   social_details = get_social_details(social)
 
   data = {
-    id: id,
-    name: name,
-    sort_name: sort_name,
+    id:               id,
+    name:             name,
+    sort_name:        sort_name,
     honorific_prefix: honorific_prefix,
     honorific_suffix: honorific_suffix,
-    faction: faction,
-    party: party,
-    start_date: start_date,
-    birth_date: dob,
-    source: url.to_s
+    faction:          faction,
+    party:            party,
+    start_date:       start_date,
+    birth_date:       dob,
+    source:           url.to_s,
   }
 
-  if not term_map[start_date].nil?
+  if !term_map[start_date].nil?
     data[:term] = term_map[start_date]
   else
     term_start = ''
     term_map.keys.sort.each do |start|
-      if start < start_date
-        term_start = start
-      end
+      term_start = start if start < start_date
     end
     data[:term] = term_map[term_start]
   end
@@ -124,7 +123,7 @@ def scrape_person(url, term_map)
   if data[:term].nil?
     ScraperWiki.save_sqlite([:id], data)
   else
-    ScraperWiki.save_sqlite([:id, :term], data)
+    ScraperWiki.save_sqlite(%i(id term), data)
   end
 end
 
@@ -144,27 +143,27 @@ def create_terms(url)
     start = name.gsub(' legislature', '')
     start_date = Date.parse(start).to_s
     term = {
-      name: name,
+      name:       name,
       start_date: start_date,
-      id: count,
-      source: URI.join(url, term.css('a/@href').to_s).to_s
+      id:         count,
+      source:     URI.join(url, term.css('a/@href').to_s).to_s,
     }
     date_to_term_map[start_date] = count
     ScraperWiki.save_sqlite([:id], term, 'terms')
     count += 1
   end
-  if not date_to_term_map['2016-06-03'].nil?
+  unless date_to_term_map['2016-06-03'].nil?
     raise "the latest term has been archived, possibly there's been an election"
   end
   term = {
-    name: '3 June 2016 legislature',
+    name:       '3 June 2016 legislature',
     start_date: '2016-06-03',
-    id: count,
-    source: url
+    id:         count,
+    source:     url,
   }
   date_to_term_map['2016-06-03'] = count
   ScraperWiki.save_sqlite([:id], term, 'terms')
-  return date_to_term_map
+  date_to_term_map
 end
 
 term_map = create_terms('http://www.parlament.gov.rs/national-assembly/composition/members-of-parliament/current-legislature.487.html')
