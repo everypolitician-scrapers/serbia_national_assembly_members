@@ -27,6 +27,11 @@ class MemberPage < Scraped::HTML
     details.xpath('//h4[contains(.,"Year of Birth")]/following-sibling::p[not(position() > 1)]/text()').to_s.delete('.').tidy
   end
 
+  field :start_date do
+    start = details.xpath('//h4[contains(.,"Date of Verification of")]/following-sibling::p[not(position() > 1)]/text()').to_s.tidy
+    Date.parse(start).to_s
+  end
+
   private
 
   def details
@@ -102,9 +107,6 @@ def scrape_person(url)
 
   name, honorific_prefix, honorific_suffix = fix_name(name)
 
-  start_date = details.xpath('//h4[contains(.,"Date of Verification of")]/following-sibling::p[not(position() > 1)]/text()').to_s.tidy
-  start_date = Date.parse(start_date).to_s
-
   party = details.xpath('//h4[contains(.,"Political party")]/following-sibling::p[not(position() > 1)]/text()').to_s
   party = party.gsub(/\(.*$/, '').tidy
   party = '' if party == '-'
@@ -125,7 +127,7 @@ def scrape_person(url)
     honorific_suffix: honorific_suffix,
     faction:          faction,
     party:            party,
-    start_date:       start_date,
+    start_date:       page.start_date,
     birth_date:       page.dob,
     term:             6,
     source:           url.to_s,
