@@ -50,6 +50,22 @@ class MemberPage < Scraped::HTML
     noko.css('.social-list a[href*=twitter]/href').text
   end
 
+  field :sort_name do
+    details.css('h2').text.to_s.tidy
+  end
+
+  field :name do
+    fixed_name[0]
+  end
+
+  field :honorific_prefix do
+    fixed_name[1]
+  end
+
+  field :honorific_suffix do
+    fixed_name[2]
+  end
+
   private
 
   def details
@@ -67,6 +83,38 @@ class MemberPage < Scraped::HTML
            .gsub('Parliamentary Group', '')
            .tidy
   end
+
+  # TODO: tidy this all up and move these to individual methods
+  def fixed_name
+    # we can't re-order the name parts because they don't seem to be
+    # consistent on all the pages so lets not try. We can extract
+    # Dr etc though so do that
+    name = sort_name
+    honorific_prefix = ''
+    name.gsub(/(\s+(?:(?:Prof|Dr|Mrs|Dr\.med\.dent)\.?\s+)+)/i) do
+      honorific_prefix = Regexp.last_match(1) or ''
+      if honorific_prefix.size
+        name = name.gsub(honorific_prefix, ' ')
+        honorific_prefix = honorific_prefix.gsub('. ', ' ').tidy
+        honorific_prefix = honorific_prefix.gsub('.$', '').tidy
+        honorific_prefix = honorific_prefix.split(' ').map(&:capitalize) .join(' ')
+      end
+    end
+
+    honorific_suffix = ''
+    name.gsub(/(\s+(?:(?:PhD|MD|Prim|M\.?Sci)\.?\s+)+)/i) do
+      honorific_suffix = Regexp.last_match(1) or ''
+      if honorific_suffix.size
+        name = name.gsub(honorific_suffix, ' ')
+        honorific_suffix = honorific_suffix.gsub('. ', ' ').tidy
+        honorific_suffix = honorific_suffix.gsub('.$', '').tidy
+      end
+    end
+
+    name = name.gsub(' - ', ' ').tidy
+
+    [name, honorific_prefix, honorific_suffix]
+  end
 end
 
 def scraper(h)
@@ -76,36 +124,6 @@ end
 
 def noko_for(url)
   Nokogiri::HTML(open(url).read)
-end
-
-def fix_name(name)
-  # we can't re-order the name parts because they don't seem to be
-  # consistent on all the pages so lets not try. We can extract
-  # Dr etc thoough so do that
-  honorific_prefix = ''
-  name.gsub(/(\s+(?:(?:Prof|Dr|Mrs|Dr\.med\.dent)\.?\s+)+)/i) do
-    honorific_prefix = Regexp.last_match(1) or ''
-    if honorific_prefix.size
-      name = name.gsub(honorific_prefix, ' ')
-      honorific_prefix = honorific_prefix.gsub('. ', ' ').tidy
-      honorific_prefix = honorific_prefix.gsub('.$', '').tidy
-      honorific_prefix = honorific_prefix.split(' ').map(&:capitalize) .join(' ')
-    end
-  end
-
-  honorific_suffix = ''
-  name.gsub(/(\s+(?:(?:PhD|MD|Prim|M\.?Sci)\.?\s+)+)/i) do
-    honorific_suffix = Regexp.last_match(1) or ''
-    if honorific_suffix.size
-      name = name.gsub(honorific_suffix, ' ')
-      honorific_suffix = honorific_suffix.gsub('. ', ' ').tidy
-      honorific_suffix = honorific_suffix.gsub('.$', '').tidy
-    end
-  end
-
-  name = name.gsub(' - ', ' ').tidy
-
-  [name, honorific_prefix, honorific_suffix]
 end
 
 def scrape_list(url)
@@ -121,17 +139,12 @@ def scrape_person(url)
 
   details = noko.css('div.optimize')
 
-  name = details.css('h2').text.to_s.tidy
-  sort_name = name
-
-  name, honorific_prefix, honorific_suffix = fix_name(name)
-
   data = {
     id:               page.id,
-    name:             name,
-    sort_name:        sort_name,
-    honorific_prefix: honorific_prefix,
-    honorific_suffix: honorific_suffix,
+    name:             page.name,
+    sort_name:        page.sort_name,
+    honorific_prefix: page.honorific_prefix,
+    honorific_suffix: page.honorific_suffix,
     faction:          page.faction,
     party:            page.party,
     start_date:       page.start_date,
