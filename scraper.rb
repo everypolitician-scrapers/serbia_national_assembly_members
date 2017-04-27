@@ -127,15 +127,15 @@ def scraper(h)
 end
 
 def scrape_list(url)
-  scraper(url => MembersPage).member_urls.each do |url|
-    scrape_person(url)
+  scraper(url => MembersPage).member_urls.each do |href|
+    scrape_person(href)
   end
 end
 
 def scrape_person(url)
   data = scraper(url => MemberPage).to_h.merge(term: 6)
   # puts data.reject { |k,v| v.to_s.empty? }.sort_by { |k,v| k }.to_h
-  ScraperWiki.save_sqlite(%i(id term), data)
+  ScraperWiki.save_sqlite(%i[id term], data)
 end
 
 scrape_list('http://www.parlament.gov.rs/national-assembly/composition/members-of-parliament/current-legislature.487.html')
