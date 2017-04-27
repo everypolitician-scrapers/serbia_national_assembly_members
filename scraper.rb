@@ -23,7 +23,7 @@ class MemberPage < Scraped::HTML
     url.to_s.gsub(/^.*\.(\d+)\.\d+.*$/, '\1')
   end
 
-  field :dob do
+  field :birth_date do
     details.xpath('//h4[contains(.,"Year of Birth")]/following-sibling::p[not(position() > 1)]/text()').to_s.delete('.').tidy
   end
 
@@ -64,6 +64,10 @@ class MemberPage < Scraped::HTML
 
   field :honorific_suffix do
     fixed_name[2]
+  end
+
+  field :source do
+    url
   end
 
   private
@@ -122,10 +126,6 @@ def scraper(h)
   klass.new(response: Scraped::Request.new(url: url).response)
 end
 
-def noko_for(url)
-  Nokogiri::HTML(open(url).read)
-end
-
 def scrape_list(url)
   scraper(url => MembersPage).member_urls.each do |url|
     scrape_person(url)
@@ -133,30 +133,8 @@ def scrape_list(url)
 end
 
 def scrape_person(url)
-  # We're going to migrate to Scraped field-by-field, so we need both for now
-  noko = noko_for(url)
-  page = scraper(url => MemberPage)
-
-  details = noko.css('div.optimize')
-
-  data = {
-    id:               page.id,
-    name:             page.name,
-    sort_name:        page.sort_name,
-    honorific_prefix: page.honorific_prefix,
-    honorific_suffix: page.honorific_suffix,
-    faction:          page.faction,
-    party:            page.party,
-    start_date:       page.start_date,
-    birth_date:       page.dob,
-    facebook:         page.facebook,
-    twitter:          page.twitter,
-    term:             6,
-    source:           url.to_s,
-  }
-
+  data = scraper(url => MemberPage).to_h.merge(term: 6)
   # puts data.reject { |k,v| v.to_s.empty? }.sort_by { |k,v| k }.to_h
-
   ScraperWiki.save_sqlite(%i(id term), data)
 end
 
