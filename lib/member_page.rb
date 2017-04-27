@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'scraped'
+require 'pry'
 
 class MemberPage < Scraped::HTML
   field :id do
@@ -27,11 +28,11 @@ class MemberPage < Scraped::HTML
   end
 
   field :facebook do
-    noko.css('.social-list a[href*=facebook]/href').text
+    noko.css('.social-list a[href*=facebook]').map { |a| a.attr('href') }.join(';')
   end
 
   field :twitter do
-    noko.css('.social-list a[href*=twitter]/href').text
+    noko.css('.social-list a[href*=twitter]').map { |a| a.attr('href') }.join(';')
   end
 
   field :sort_name do
