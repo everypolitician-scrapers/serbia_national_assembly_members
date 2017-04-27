@@ -32,10 +32,19 @@ class MemberPage < Scraped::HTML
     Date.parse(start).to_s
   end
 
+  field :party do
+    return '' if raw_party == '-'
+    raw_party
+  end
+
   private
 
   def details
     noko.css('div.optimize')
+  end
+
+  def raw_party
+    details.xpath('//h4[contains(.,"Political party")]/following-sibling::p[not(position() > 1)]/text()').to_s.gsub(/\(.*$/, '').tidy
   end
 end
 
@@ -107,10 +116,6 @@ def scrape_person(url)
 
   name, honorific_prefix, honorific_suffix = fix_name(name)
 
-  party = details.xpath('//h4[contains(.,"Political party")]/following-sibling::p[not(position() > 1)]/text()').to_s
-  party = party.gsub(/\(.*$/, '').tidy
-  party = '' if party == '-'
-
   faction = details.xpath('//h4[contains(.,"Parliamentary group")]/following-sibling::p[position() = 1]/a[not(position() > 1)]/text()').to_s
   faction = faction.gsub('Read more ˃˃', '')
   faction = faction.gsub('Parliamentary Group', '').tidy
@@ -126,7 +131,7 @@ def scrape_person(url)
     honorific_prefix: honorific_prefix,
     honorific_suffix: honorific_suffix,
     faction:          faction,
-    party:            party,
+    party:            page.party,
     start_date:       page.start_date,
     birth_date:       page.dob,
     term:             6,
