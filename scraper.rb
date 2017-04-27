@@ -10,6 +10,19 @@ require 'scraperwiki'
 # OpenURI::Cache.cache_path = '.cache'
 require 'scraped_page_archive/open-uri'
 
+class MembersPage < Scraped::HTML
+  decorator Scraped::Response::Decorator::CleanUrls
+
+  field :member_urls do
+    noko.css('div.delegate_list tr td a/@href').map(&:text)
+  end
+end
+
+def scraper(h)
+  url, klass = h.to_a.first
+  klass.new(response: Scraped::Request.new(url: url).response)
+end
+
 def noko_for(url)
   Nokogiri::HTML(open(url).read)
 end
@@ -56,10 +69,8 @@ def fix_name(name)
 end
 
 def scrape_list(url)
-  noko = noko_for(url)
-  noko.css('div.delegate_list tr td a/@href').each do |link|
-    bio = URI.join(url, link.to_s)
-    scrape_person(bio)
+  scraper(url => MembersPage).member_urls.each do |url|
+    scrape_person(url)
   end
 end
 
