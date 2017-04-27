@@ -22,6 +22,16 @@ class MemberPage < Scraped::HTML
   field :id do
     url.to_s.gsub(/^.*\.(\d+)\.\d+.*$/, '\1')
   end
+
+  field :dob do
+    details.xpath('//h4[contains(.,"Year of Birth")]/following-sibling::p[not(position() > 1)]/text()').to_s.delete('.').tidy
+  end
+
+  private
+
+  def details
+    noko.css('div.optimize')
+  end
 end
 
 def scraper(h)
@@ -92,9 +102,6 @@ def scrape_person(url)
 
   name, honorific_prefix, honorific_suffix = fix_name(name)
 
-  dob = details.xpath('//h4[contains(.,"Year of Birth")]/following-sibling::p[not(position() > 1)]/text()').to_s.tidy
-  dob = dob.delete('.')
-
   start_date = details.xpath('//h4[contains(.,"Date of Verification of")]/following-sibling::p[not(position() > 1)]/text()').to_s.tidy
   start_date = Date.parse(start_date).to_s
 
@@ -119,7 +126,7 @@ def scrape_person(url)
     faction:          faction,
     party:            party,
     start_date:       start_date,
-    birth_date:       dob,
+    birth_date:       page.dob,
     term:             6,
     source:           url.to_s,
   }
