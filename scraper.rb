@@ -37,6 +37,11 @@ class MemberPage < Scraped::HTML
     raw_party
   end
 
+  field :faction do
+    return '' if raw_faction == 'MPs not members of parliamentary groups'
+    raw_faction
+  end
+
   private
 
   def details
@@ -45,6 +50,14 @@ class MemberPage < Scraped::HTML
 
   def raw_party
     details.xpath('//h4[contains(.,"Political party")]/following-sibling::p[not(position() > 1)]/text()').to_s.gsub(/\(.*$/, '').tidy
+  end
+
+  def raw_faction
+    details.xpath('//h4[contains(.,"Parliamentary group")]/following-sibling::p[position() = 1]/a[not(position() > 1)]/text()')
+           .to_s
+           .gsub('Read more ˃˃', '')
+           .gsub('Parliamentary Group', '')
+           .tidy
   end
 end
 
@@ -116,11 +129,6 @@ def scrape_person(url)
 
   name, honorific_prefix, honorific_suffix = fix_name(name)
 
-  faction = details.xpath('//h4[contains(.,"Parliamentary group")]/following-sibling::p[position() = 1]/a[not(position() > 1)]/text()').to_s
-  faction = faction.gsub('Read more ˃˃', '')
-  faction = faction.gsub('Parliamentary Group', '').tidy
-  faction = '' if faction == 'MPs not members of parliamentary groups'
-
   social = noko.xpath('//div[contains(@class,"single_member")]/following-sibling::div/ul/li')
   social_details = get_social_details(social)
 
@@ -130,7 +138,7 @@ def scrape_person(url)
     sort_name:        sort_name,
     honorific_prefix: honorific_prefix,
     honorific_suffix: honorific_suffix,
-    faction:          faction,
+    faction:          page.faction,
     party:            page.party,
     start_date:       page.start_date,
     birth_date:       page.dob,
