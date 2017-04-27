@@ -18,6 +18,12 @@ class MembersPage < Scraped::HTML
   end
 end
 
+class MemberPage < Scraped::HTML
+  field :id do
+    url.to_s.gsub(/^.*\.(\d+)\.\d+.*$/, '\1')
+  end
+end
+
 def scraper(h)
   url, klass = h.to_a.first
   klass.new(response: Scraped::Request.new(url: url).response)
@@ -75,10 +81,11 @@ def scrape_list(url)
 end
 
 def scrape_person(url)
+  # We're going to migrate to Scraped field-by-field, so we need both for now
   noko = noko_for(url)
-  details = noko.css('div.optimize')
+  page = scraper(url => MemberPage)
 
-  id = url.to_s.gsub(/^.*\.(\d+)\.\d+.*$/, '\1')
+  details = noko.css('div.optimize')
 
   name = details.css('h2').text.to_s.tidy
   sort_name = name
@@ -104,7 +111,7 @@ def scrape_person(url)
   social_details = get_social_details(social)
 
   data = {
-    id:               id,
+    id:               page.id,
     name:             name,
     sort_name:        sort_name,
     honorific_prefix: honorific_prefix,
