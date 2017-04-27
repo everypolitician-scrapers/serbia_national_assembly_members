@@ -42,6 +42,14 @@ class MemberPage < Scraped::HTML
     raw_faction
   end
 
+  field :facebook do
+    noko.css('.social-list a[href*=facebook]/href').text
+  end
+
+  field :twitter do
+    noko.css('.social-list a[href*=twitter]/href').text
+  end
+
   private
 
   def details
@@ -68,17 +76,6 @@ end
 
 def noko_for(url)
   Nokogiri::HTML(open(url).read)
-end
-
-def get_social_details(social)
-  details = {}
-  social.each do |item|
-    details[:facebook] = item.css('a/@href').to_s if item.text.to_s.index('Facebook account')
-    details[:twitter] = item.css('a/@href').to_s if item.text.to_s.index('Twitter account')
-    details[:website] = item.css('a/@href').to_s if item.text.to_s.index('Personal website')
-  end
-
-  details
 end
 
 def fix_name(name)
@@ -129,9 +126,6 @@ def scrape_person(url)
 
   name, honorific_prefix, honorific_suffix = fix_name(name)
 
-  social = noko.xpath('//div[contains(@class,"single_member")]/following-sibling::div/ul/li')
-  social_details = get_social_details(social)
-
   data = {
     id:               page.id,
     name:             name,
@@ -142,11 +136,12 @@ def scrape_person(url)
     party:            page.party,
     start_date:       page.start_date,
     birth_date:       page.dob,
+    facebook:         page.facebook,
+    twitter:          page.twitter,
     term:             6,
     source:           url.to_s,
   }
 
-  data = data.merge(social_details)
   # puts data.reject { |k,v| v.to_s.empty? }.sort_by { |k,v| k }.to_h
 
   ScraperWiki.save_sqlite(%i(id term), data)
