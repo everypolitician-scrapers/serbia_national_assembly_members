@@ -91,7 +91,7 @@ class MemberPage < Scraped::HTML
     end
 
     honorific_suffix = ''
-    name.gsub(/(\s+(?:(?:PhD|MD|Prim|M\.?Sci)\.?\s+)+)/i) do
+    name.gsub(/(\s+(?:(?:PhD|MD|Prim|MA|M\.?Sci)\.?\s+)+)/i) do
       honorific_suffix = Regexp.last_match(1) or ''
       if honorific_suffix.size
         name = name.gsub(honorific_suffix, ' ')
